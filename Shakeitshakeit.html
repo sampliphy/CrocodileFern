@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Shake Setlist</title>
+  <style>
+    :root{
+      --bg1:#0b1020;
+      --bg2:#1a0b2e;
+      --glass: rgba(255,255,255,.08);
+      --glass2: rgba(255,255,255,.12);
+      --txt: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.65);
+      --stroke: rgba(255,255,255,.14);
+      --shadow: 0 18px 50px rgba(0,0,0,.35);
+      --radius: 22px;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      color:var(--txt);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      overflow-x:hidden;
+      background:
+        radial-gradient(1000px 700px at 20% 10%, rgba(120, 92, 255, .35), transparent 55%),
+        radial-gradient(900px 600px at 80% 30%, rgba(255, 80, 170, .25), transparent 55%),
+        radial-gradient(800px 700px at 50% 90%, rgba(0, 255, 210, .14), transparent 55%),
+        linear-gradient(160deg, var(--bg1), var(--bg2));
+    }
+
+    .wrap{
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 20px 16px 40px;
+    }
+
+    header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:16px;
+      margin: 10px 0 16px;
+    }
+    h1{
+      margin:0;
+      font-size: 18px;
+      letter-spacing:.2px;
+    }
+    .sub{
+      margin-top:6px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 8px 10px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.06);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+      backdrop-filter: blur(10px);
+    }
+    .dot{
+      width:8px;height:8px;border-radius:99px;
+      background: rgba(255,255,255,.35);
+      box-shadow: 0 0 0 4px rgba(255,255,255,.06);
+    }
+    .dot.ok{ background: rgba(0,255,170,.75); }
+    .dot.warn{ background: rgba(255,200,0,.75); }
+    .dot.err{ background: rgba(255,70,70,.75); }
+
+    .card{
+      border: 1px solid var(--stroke);
+      background: linear-gradient(180deg, var(--glass), rgba(255,255,255,.04));
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .controls{
+      padding: 14px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .btn{
+      border: 1px solid rgba(255,255,255,.18);
+      background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.08));
+      color: var(--txt);
+      border-radius: 18px;
+      padding: 14px 14px;
+      font-weight: 800;
+      letter-spacing: .2px;
+      cursor:pointer;
+      box-shadow: 0 14px 30px rgba(0,0,0,.25);
+      transition: transform .08s ease, filter .2s ease;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      font-size: 14px;
+    }
+    .btn:active{ transform: translateY(1px) scale(.995); }
+    .btn small{
+      font-weight:700;
+      opacity:.75;
+      letter-spacing:0;
+    }
+
+    .metaRow{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .listCard{
+      margin-top: 14px;
+      padding: 12px 10px;
+    }
+
+    ul{
+      list-style:none;
+      padding:0;
+      margin: 0;
+    }
+
+    .item{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding: 10px 10px;
+      border-radius: 16px;
+      border: 1px solid transparent;
+      transition: background .2s ease, border-color .2s ease;
+      will-change: transform;
+    }
+    .item + .item{ margin-top: 6px; }
+
+    .item:hover{
+      background: rgba(255,255,255,.05);
+      border-color: rgba(255,255,255,.10);
+    }
+
+    .left{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:0;
+    }
+
+    .idx{
+      width: 28px;
+      text-align:right;
+      color: rgba(255,255,255,.55);
+      font-variant-numeric: tabular-nums;
+      flex: 0 0 auto;
+    }
+
+    .title{
+      font-size: 14px;
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tag{
+      font-size: 11px;
+      color: rgba(255,255,255,.75);
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      padding: 4px 8px;
+      border-radius: 999px;
+      flex: 0 0 auto;
+    }
+
+    .tag.covers{ border-color: rgba(255,255,255,.18); }
+    .tag.oldies{ border-color: rgba(255,200,0,.25); }
+    .tag.newbies{ border-color: rgba(0,255,210,.22); }
+
+    /* Animation FLIP */
+    .move{
+      transition: transform 420ms cubic-bezier(.2,.8,.2,1);
+    }
+
+    footer{
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align:center;
+      opacity:.85;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>🎲 Shake Setlist</h1>
+        <div class="sub">
+          Appuie sur le bouton ou secoue ton téléphone (Android) pour réordonner la setlist.
+          <br/>Les chansons sont codées dans la page (tu ajoutes toi-même).
+        </div>
+      </div>
+
+      <div class="pill" id="sensorPill" title="État des capteurs">
+        <span class="dot" id="sensorDot"></span>
+        <span id="sensorText">capteurs: ...</span>
+      </div>
+    </header>
+
+    <div class="card controls">
+      <button class="btn" id="btnShake">
+        🫳 Shake it shake it <small>(manuel)</small>
+      </button>
+
+      <div class="metaRow">
+        <div id="counts">—</div>
+        <div id="hint">Astuce: secoue fort une fois 😄</div>
+      </div>
+    </div>
+
+    <div class="card listCard">
+      <ul id="list"></ul>
+    </div>
+
+    <footer>
+      Smooth shuffle + animation. (Meilleur shake en HTTPS.)
+    </footer>
+  </div>
+
+<script>
+/**
+ * ==========================================
+ *   ✅ TES CHANSONS: modifie ici seulement
+ * ==========================================
+ */
+const covers = [
+"Hey Bulldog",
+"SWLABR",
+"Bring It On Home",
+"Almost Cut My Hair"
+];
+
+const oldies = [
+"The Piano Is Out Of Tune",
+"Chimera Rock",
+"Sno Snake",
+"Space Snake",
+"White box",
+"Ebb & flow",
+"Windbound",
+"Sing me a song"
+];
+
+const newbies = [
+"Blight",
+"From the Hinterland",
+"Circus",
+"The Conductor",
+"Foot Prince"
+];
+
+/**
+ * Optionnel: bonus/malus (si tu veux réintroduire ça plus tard)
+ * Ex: {"Space Snake": 2, "Snow Snake": -2}
+ */
+const mods = {
+  // "Space Snake": 2,
+};
+
+/**
+ * ==========================================
+ *   Shuffle + Interleave (anti-clumping)
+ * ==========================================
+ * On mélange chaque catégorie, puis on intercale en round-robin:
+ * newbies -> oldies -> covers (en sautant celles qui sont vides).
+ */
+function shuffleInPlace(arr){
+  for (let i = arr.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+
+  return arr;
+}
+
+function buildInterleavedSetlist() {
+
+  const all = [
+    ...covers.map(t => ({ title: t, cat: "covers" })),
+    ...oldies.map(t => ({ title: t, cat: "oldies" })),
+    ...newbies.map(t => ({ title: t, cat: "newbies" }))
+  ];
+
+  // vrai shuffle
+  for (let i = all.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [all[i], all[j]] = [all[j], all[i]];
+  }
+
+  return all;
+}
+
+/**
+ * ==========================================
+ *   Animation FLIP lors du reorder
+ * ==========================================
+ */
+const listEl = document.getElementById("list");
+let current = [];
+
+function renderAnimated(next){
+  // 1) Capture positions before
+  const first = new Map();
+  [...listEl.children].forEach(li => {
+    first.set(li.dataset.key, li.getBoundingClientRect());
+  });
+
+  // 2) Render new DOM
+  listEl.innerHTML = "";
+  next.forEach((s, idx) => {
+    const li = document.createElement("li");
+    li.className = "item move";
+    li.dataset.key = s.key;
+
+    li.innerHTML = `
+      <div class="left">
+        <div class="idx">${idx + 1}</div>
+        <div class="title">${escapeHtml(s.title)}</div>
+      </div>
+      <div class="tag ${s.cat}">${labelCat(s.cat)}</div>
+    `;
+    listEl.appendChild(li);
+  });
+
+  // 3) Capture positions after + invert + play
+  const last = new Map();
+  [...listEl.children].forEach(li => {
+    last.set(li.dataset.key, li.getBoundingClientRect());
+  });
+
+  [...listEl.children].forEach(li => {
+    const key = li.dataset.key;
+    const f = first.get(key);
+    const l = last.get(key);
+    if (!f || !l) return;
+
+    const dx = f.left - l.left;
+    const dy = f.top - l.top;
+
+    if (dx || dy) {
+      li.style.transform = `translate(${dx}px, ${dy}px)`;
+      li.getBoundingClientRect(); // force reflow
+      li.style.transform = "";
+    }
+  });
+}
+
+function escapeHtml(s){
+  return String(s)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll("\"","&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function labelCat(cat){
+  if (cat === "covers") return "Cover";
+  if (cat === "oldies") return "Vieille";
+  return "Nouvelle";
+}
+
+/**
+ * ==========================================
+ *   Shuffle action
+ * ==========================================
+ */
+function normalizeSongs() {
+  // Ajoute une clé stable pour FLIP (titre+cat)
+  const next = buildInterleavedSetlist().map(s => ({
+    ...s,
+    key: `${s.cat}::${s.title}`
+  }));
+  return next;
+}
+
+function doShake(){
+  // shake visuel (animate() si dispo, sinon CSS)
+  if (document.body.animate) {
+    document.body.animate(
+      [
+        { transform: "translateX(0)" },
+        { transform: "translateX(-10px)" },
+        { transform: "translateX(10px)" },
+        { transform: "translateX(-8px)" },
+        { transform: "translateX(8px)" },
+        { transform: "translateX(0)" }
+      ],
+      { duration: 260 }
+    );
+  } else {
+    document.body.classList.remove("shakeNow");
+    void document.body.offsetWidth; // force reflow
+    document.body.classList.add("shakeNow");
+    setTimeout(() => document.body.classList.remove("shakeNow"), 300);
+  }
+
+  const next = normalizeSongs();
+  current = next;
+
+  // si première fois: rendu simple sans animation FLIP préalable
+  if (listEl.children.length === 0) {
+    listEl.innerHTML = "";
+    next.forEach((s, idx) => {
+      const li = document.createElement("li");
+      li.className = "item";
+      li.dataset.key = s.key;
+      li.innerHTML = `
+        <div class="left">
+          <div class="idx">${idx + 1}</div>
+          <div class="title">${escapeHtml(s.title)}</div>
+        </div>
+        <div class="tag ${s.cat}">${labelCat(s.cat)}</div>
+      `;
+      listEl.appendChild(li);
+    });
+  } else {
+    renderAnimated(next);
+  }
+}
+
+/**
+ * ==========================================
+ *   Shake detection (Android)
+ * ==========================================
+ */
+const sensorText = document.getElementById("sensorText");
+const sensorDot  = document.getElementById("sensorDot");
+
+let lastShakeTs = 0;
+const THRESHOLD = 18;   // ajuste si nécessaire
+const COOLDOWN  = 1200; // ms
+
+function setSensorState(state){
+  // state: "ok" | "warn" | "err"
+  sensorDot.className = "dot " + state;
+}
+
+function motionHandler(ev){
+  const a = ev.accelerationIncludingGravity || ev.acceleration;
+  if (!a) return;
+
+  const ax = a.x || 0, ay = a.y || 0, az = a.z || 0;
+  const mag = Math.sqrt(ax*ax + ay*ay + az*az);
+
+  const now = Date.now();
+  if (mag > THRESHOLD && (now - lastShakeTs) > COOLDOWN) {
+    lastShakeTs = now;
+    doShake();
+  }
+}
+
+function initMotion(){
+  try{
+    // iOS: permission explicite. Android: souvent direct.
+    if (typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission === "function") {
+      sensorText.textContent = "capteurs: iOS (permission)";
+      setSensorState("warn");
+      // on ne force pas ici — UI minimal — on pourra ajouter un bouton “Autoriser” plus tard si tu veux.
+      return;
+    }
+
+    window.addEventListener("devicemotion", motionHandler, { passive: true });
+    sensorText.textContent = "capteurs: actifs";
+    setSensorState("ok");
+  } catch (e){
+    sensorText.textContent = "capteurs: indisponibles";
+    setSensorState("err");
+  }
+}
+
+/**
+ * ==========================================
+ *   Boot
+ * ==========================================
+ */
+document.getElementById("btnShake").addEventListener("click", () => {
+  // bypass cooldown pour le manuel
+  lastShakeTs = 0;
+  doShake();
+});
+
+function updateCounts(){
+  const c = covers.length, o = oldies.length, n = newbies.length;
+  document.getElementById("counts").textContent =
+    `Covers: ${c} · Vieilles: ${o} · Nouvelles: ${n} · Total: ${c+o+n}`;
+}
+
+// First render
+updateCounts();
+doShake();
+initMotion();
+</script>
+</body>
+</html>
